@@ -1,0 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans+Condensed&family=Ubuntu+Mono&display=swap');
+
+body {font-family: 'Fira Sans Condensed', sans-serif;}
+
+#box_inputs {
+  text-align: center;
+}

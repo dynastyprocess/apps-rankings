@@ -5,8 +5,8 @@ library(DT)
 library(yaml)
 library(RColorBrewer)
 
-# fantasypros_raw <-
-#   read.csv("https://github.com/dynastyprocess/data/raw/master/files/db_fpecr.csv")
+fantasypros_raw <-
+  read.csv("https://github.com/dynastyprocess/data/raw/master/files/db_fpecr.csv")
 
 fantasypros <- fantasypros_raw %>%
   filter(
