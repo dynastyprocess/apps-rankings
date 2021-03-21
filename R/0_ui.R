@@ -14,6 +14,7 @@ suppressPackageStartupMessages({
   library(glue)
   library(magrittr)
   library(rlang)
+  library(yaml)
 
   # Shiny
   library(shiny)
@@ -125,3 +126,23 @@ box_inputs <- function(){
       )
   )
 }
+
+
+#### Table Box ####
+
+box_rankings <- function(ranking_type, position){
+
+  box_title <- glue("Your Rankings: {ranking_type} {position}")
+
+    box(
+      width = 12,
+      inputId = 'box_rankings',
+      status = "danger",
+      title = box_title,
+      fluidRow(
+        DTOutput("table")
+      )
+    )
+
+  }
+

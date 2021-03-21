@@ -5,8 +5,10 @@ library(DT)
 library(yaml)
 library(RColorBrewer)
 
-fantasypros_raw <-
-  read.csv("https://github.com/dynastyprocess/data/raw/master/files/db_fpecr.csv")
+# fantasypros_raw <-
+#   read.csv("https://github.com/dynastyprocess/data/raw/master/files/db_fpecr.csv")
+
+fantasypros_raw <- arrow::read_parquet("data/fantasypros_raw.parquet")
 
 fantasypros <- fantasypros_raw %>%
   filter(
@@ -189,7 +191,7 @@ server <- function(input, output, session) {
 
     if(length(qb_info)==0){return()}
 
-    .qborder<-seq(1,num_qb)
+    .qborder<-seq(1, num_qb)
     .new_qborder<-.qborder
 
     for (i in 1:length(qb_info)){
