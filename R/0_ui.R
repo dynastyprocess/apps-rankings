@@ -25,6 +25,7 @@ suppressPackageStartupMessages({
   library(RColorBrewer)
   library(waiter)
   library(sever)
+  library(auth0)
 
   # Data output
   library(writexl)

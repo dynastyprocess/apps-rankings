@@ -3,7 +3,19 @@ options(dplyr.summarise.inform = FALSE)
 ui <- dashboardPage(
   sidebar_collapsed = TRUE,
   title = "Rankings App - DynastyProcess.com",
-  navbar = ui_header("Rankings App - DynastyProcess.com"),
+  navbar = ui_header(
+    "Rankings App - DynastyProcess.com"
+    # rightUi = tagList(
+    # uiOutput("user_menu")
+    # bs4UserMenu(
+    #   name = textOutput("user_nickname"),
+    #   title = textOutput("user_nickname"),
+    #   subtitle = textOutput("user_name"),
+    #   src = textOutput("user_picture"),
+    #   status = "danger"
+    # )
+    # )
+  ),
   sidebar = ui_sidebar(
     menuItem("Rankings App", tabName = "rankings", icon = "hat-wizard"),
     external_menuItem("More by DynastyProcess", "https://dynastyprocess.com", icon = "quidditch")
@@ -21,6 +33,20 @@ ui <- dashboardPage(
         ),
         fluidRow(
           uiOutput("rankings"),
+          uiOutput("user_info")
+          # box(
+          #   width = 3,
+          #   inputId = 'box_actions',
+          #   status = "danger",
+          #   title = "Save/Download",
+          #   br(),
+          #   footer = list(
+          #     actionButton("save", "Save", icon = icon("space-shuttle"), class = "btn-primary"),
+          #     downloadButton("download", class = "btn-success")
+          #   )
+
+
+          # )
         ),
         br(),
         actionButton('debug',label = "debug")
@@ -34,6 +60,30 @@ server <- function(input, output, session) {
   observeEvent(input$debug, browser())
 
   sever_dp()
+
+  output$user_info <- renderUI({
+    # column(12,
+           bs4UserCard(
+             status = "danger",
+             width = 12,
+             src = session$userData$auth0_info$picture,
+             title = session$userData$auth0_info$nickname,
+             subtitle = session$userData$auth0_info$name,
+             actionButton("save", "Save", icon = icon("space-shuttle"), class = "btn-primary"),
+             downloadButton("download_rankings", class = "btn-success")
+           )
+  })
+
+  output$download_rankings <- downloadHandler(
+    filename = function(){
+      glue::glue("DPRankings_{Sys.time()}_{input$rank_type}_{input$position}.xlsx")
+      },
+    content = function(file){
+      write_xlsx(
+        df_fantasypros(),
+        file
+      )
+    })
 
   #### Update Pickers ####
 
@@ -61,8 +111,12 @@ server <- function(input, output, session) {
 
     load_fpdata(input$rank_type,input$position) %>%
       mutate(`Your Rank` = row_number(),
-             Z = (ecr-`Your Rank`)/sd
-             ) %>%
+             Z = round((ecr-`Your Rank`)/sd,1),
+             sd = round(sd,1),
+             user_id = session$userData$auth0_info$sub,
+             user_nickname = session$userData$auth0_info$nickname,
+             user_name = session$userData$auth0_info$name,
+      ) %>%
       select(`Scrape Date` = scrape_date,
              `Player Name` = player_name,
              Pos = pos,
@@ -74,7 +128,11 @@ server <- function(input, output, session) {
              Best = best,
              Worst = worst,
              fantasypros_id,
-             ecr_type) %>%
+             ecr_type,
+             user_id,
+             user_name,
+             user_nickname
+             ) %>%
       df_fantasypros()
 
     nrow_df(nrow(df_fantasypros()))
@@ -93,7 +151,11 @@ server <- function(input, output, session) {
   output$table <- renderDT({
 
     df_fantasypros() %>%
-      select(-ecr_type,-fantasypros_id) %>%
+      select(-ecr_type,
+             -fantasypros_id,
+             -user_id,
+             -user_name,
+             -user_nickname) %>%
       datatable(
         rownames = FALSE,
         extensions = 'RowReorder',
@@ -110,8 +172,7 @@ server <- function(input, output, session) {
       formatRound(c('Z','SD'),1) %>%
       formatStyle(1:10,'Z',backgroundColor=styleInterval(quantile(range(-3,3),probs=seq(0.05,0.95,0.05),na.rm=TRUE),colourlist(20)))
 
-    })
-
+  })
 
   observeEvent(input$row_reorder,{ # watching the "reorder" events ----
 
@@ -140,7 +201,7 @@ server <- function(input, output, session) {
     new_df <- df_fantasypros() %>%
       select(-`Your Rank`) %>%
       mutate(`Your Rank`= new_order,
-             Z = (`FP Rank`-`Your Rank`)/`SD`) %>%
+             Z = round((`FP Rank`-`Your Rank`)/`SD`,1)) %>%
       arrange(`Your Rank`) %>%
       select(`Scrape Date`,
              `Player Name`,
@@ -152,13 +213,15 @@ server <- function(input, output, session) {
              SD,
              Best,
              Worst,
+             fantasypros_id,
              ecr_type,
-             fantasypros_id)
+             user_id,
+             user_name,
+             user_nickname)
 
     df_fantasypros(new_df)
 
   })
-
 
   output$rankings <- renderUI({
 
@@ -168,7 +231,8 @@ server <- function(input, output, session) {
 
   })
 
-
 }
 
-shinyApp(ui, server)
+options(shiny.port = 8080)
+shinyAppAuth0(ui, server)
+# shinyApp(ui, server)
