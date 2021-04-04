@@ -26,6 +26,7 @@ suppressPackageStartupMessages({
   library(waiter)
   library(sever)
   library(auth0)
+  library(uuid)
 
   # Data output
   library(writexl)
@@ -135,15 +136,30 @@ box_rankings <- function(ranking_type, position){
 
   box_title <- glue("Your Rankings: {ranking_type} {position}")
 
-    box(
-      width = 12,
-      inputId = 'box_rankings',
-      status = "danger",
-      title = box_title,
-      fluidRow(
-        DTOutput("table")
+  box(
+    width = 12,
+    inputId = 'box_rankings',
+    status = "danger",
+    title = box_title,
+    fluidRow(
+      column(width = 12,
+      div(
+        style = "text-align:center;",
+        actionButton("save_rankings",
+                     "Save Rankings",
+                     icon = icon("quidditch"),
+                     class = "btn-primary"),
+        downloadButton("download_rankings",
+                       "Download Rankings",
+                       class = "btn-success")
       )
+      )
+    ),
+    hr(),
+    fluidRow(
+      DTOutput("rankings_table")
     )
+  )
 
-  }
+}
 
