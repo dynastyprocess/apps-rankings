@@ -7,6 +7,8 @@ library(RColorBrewer)
 
 # fantasypros_raw <-
 #   read.csv("https://github.com/dynastyprocess/data/raw/master/files/db_fpecr.csv")
+#
+# fantasypros_raw %>% arrow::write_parquet("data/fantasypros_raw.parquet")
 
 fantasypros_raw <- arrow::read_parquet("data/fantasypros_raw.parquet")
 
