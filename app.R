@@ -25,9 +25,9 @@ ui <- dashboardPage(
         ),
         fluidRow(
           uiOutput("rankings"),
-        ),
-        br(),
-        actionButton("debug", label = "debug")
+        )
+        # br(),
+        # actionButton("debug", label = "debug")
       )
     )
   )
