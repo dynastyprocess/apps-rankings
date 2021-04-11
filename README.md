@@ -15,9 +15,9 @@
 > -   save your rankings to a database, encoded with a user's ID [database? experiment with mongo?] [Done! - Arrow]
 >
 > -   BUG: switch to proxy updating so that it doesn't regenerate the table [Done!]
+> -   deploy to server [Done!]
+> -   automatic/weekly sync to latest DP data c/o GH [Done!]
+> -   Add rookie data [Done!]
 
--   Add rookie data
--   automatic/weekly sync to latest DP data c/o GH
 -   tab/interface for retrieving data
 -   minor code cleanups and refactors
--   deploy to server

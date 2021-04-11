@@ -56,7 +56,12 @@ server <- function(input, output, session) {
   #### Update Pickers ####
 
   observeEvent(input$rank_type, {
-    if (str_detect(input$rank_type, "Overall")) {
+
+    if (str_detect(input$rank_type, "Dynasty Overall")) {
+      updatePickerInput(session, "position", choices = c("Rookies","All Offense"))
+    }
+
+    if (str_detect(input$rank_type, "Redraft Overall")) {
       updatePickerInput(session, "position", choices = c("All Offense", "All Defense"))
     }
 

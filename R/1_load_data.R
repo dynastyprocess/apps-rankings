@@ -8,14 +8,19 @@
 
 load_fpdata <- function(type, position){
 
-  type_list <- c("Dynasty Positional"= "dp",
-                 "Dynasty Overall 1QB"= "do",
-                 "Dynasty Overall SF"= "dsf",
-                 "Redraft Positional"= "rp",
-                 "Redraft Overall 1QB"= "ro",
-                 "Redraft Overall SF"= "rsf")
+  if(position != "Rookies"){
 
-  type <- type_list[type]
+    type_list <- c("Dynasty Positional"= "dp",
+                   "Dynasty Overall 1QB"= "do",
+                   "Dynasty Overall SF"= "dsf",
+                   "Redraft Positional"= "rp",
+                   "Redraft Overall 1QB"= "ro",
+                   "Redraft Overall SF"= "rsf")
+
+    type <- type_list[type]
+  }
+
+  if(position == "Rookies") type <- "drk"
 
   fantasypros_raw <- read_parquet("data/fantasypros_raw.parquet") %>%
     filter(ecr_type == type) %>%
@@ -24,7 +29,7 @@ load_fpdata <- function(type, position){
                           # ecr > 32 ~ ecr^0.6,
                           TRUE ~ sd))
 
-  if(str_detect(type, "o$|sf$")) {
+  if(str_detect(type, "o$|sf$|rk$")) {
 
     if(position == "All Offense") {
       fantasypros_raw <- fantasypros_raw %>%

@@ -105,19 +105,21 @@ box_inputs <- function(){
           "Select Ranking Type",
           width = '100%',
           multiple = FALSE,
-          choices = c("Dynasty Positional",
-                      "Dynasty Overall 1QB",
-                      "Dynasty Overall SF",
-                      "Redraft Positional",
-                      "Redraft Overall 1QB",
-                      "Redraft Overall SF"))
+          choices = c(
+            "Dynasty Overall 1QB",
+            "Dynasty Overall SF",
+            "Dynasty Positional",
+            "Redraft Overall 1QB",
+            "Redraft Overall SF",
+            "Redraft Positional"
+            ))
       ),
       column(
         width = 4,
         pickerInput(
           'position',
           label = "Select Position",
-          choices = c("All Offense","QB","RB","WR","TE","All Defense", "DL", "LB", "DB"),
+          choices = c("All Offense","QB","RB","WR","TE","Rookies","All Defense", "DL", "LB", "DB"),
           multiple = FALSE,
           width = '100%')
       )
