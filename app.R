@@ -22,12 +22,8 @@ ui <- dashboardPage(
         tabName = "rankings",
         # actionButton("debug", label = "debug"),
         # br(),
-        fluidRow(
           box_inputs(),
-        ),
-        fluidRow(
           uiOutput("rankings"),
-        )
       )
     )
   )
@@ -136,6 +132,7 @@ server <- function(input, output, session) {
         user_id = str_replace(user_id, "\\|", "_"),
         timestamp = Sys.time()
       ) %>%
+      mutate_if(is.numeric,as.double) %>%
       write_dataset(
         path = "storage",
         format = "parquet",
@@ -174,6 +171,6 @@ server <- function(input, output, session) {
 
 options(shiny.port = 8080)
 
-shinyAppAuth0(ui, server)
+# shinyAppAuth0(ui, server)
 
-# shinyApp(ui, server)
+shinyApp(ui, server)

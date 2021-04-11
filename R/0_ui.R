@@ -139,7 +139,7 @@ box_rankings <- function(ranking_type, position){
   box_title <- glue("Your Rankings: {ranking_type} {position}")
 
   box(
-    width = 12,
+    width = 8,
     inputId = 'box_rankings',
     status = "danger",
     title = box_title,
