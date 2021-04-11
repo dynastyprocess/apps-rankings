@@ -112,7 +112,7 @@ box_inputs <- function(){
             "Redraft Overall 1QB",
             "Redraft Overall SF",
             "Redraft Positional"
-            ))
+          ))
       ),
       column(
         width = 4,
@@ -145,16 +145,16 @@ box_rankings <- function(ranking_type, position){
     title = box_title,
     fluidRow(
       column(width = 12,
-      div(
-        style = "text-align:center;",
-        actionButton("save_rankings",
-                     "Save Rankings",
-                     icon = icon("quidditch"),
-                     class = "btn-primary"),
-        downloadButton("download_rankings",
-                       "Download Rankings",
-                       class = "btn-success")
-      )
+             div(
+               style = "text-align:center;",
+               actionButton("save_rankings",
+                            "Save Rankings",
+                            icon = icon("quidditch"),
+                            class = "btn-primary"),
+               downloadButton("download_rankings",
+                              "Download Rankings",
+                              class = "btn-success")
+             )
       )
     ),
     hr(),
@@ -165,3 +165,51 @@ box_rankings <- function(ranking_type, position){
 
 }
 
+#### Update Position Filter ####
+
+update_position_filter <- function(session, rank_type){
+
+  if (str_detect(rank_type, "Dynasty Overall")) {
+    updatePickerInput(session, "position", choices = c("Rookies","All Offense"))
+  }
+
+  if (str_detect(rank_type, "Redraft Overall")) {
+    updatePickerInput(session, "position", choices = c("All Offense", "All Defense"))
+  }
+
+  if (str_detect(rank_type, "Position")) {
+    updatePickerInput(session, "position", choices = c("QB", "RB", "WR", "TE", "DL", "LB", "DB"))
+  }
+}
+
+#### Rankings DT function ####
+rankings_datatable <- function(input_df){
+
+  colourlist <- colorRampPalette(brewer.pal(3, "PRGn"))
+
+  input_df %>%
+    datatable(
+      extensions = "RowReorder",
+      selection = "none",
+      options = list(
+        rowReorder = list(selector = "tr"),
+        order = list(c(4, "asc")),
+        dom = "ftir",
+        paging = FALSE,
+        searching = FALSE,
+        scrollX = TRUE
+      ),
+      callback = JS("table.on('row-reorder',function(e, details, all){
+                      Shiny.onInputChange('row_reorder', JSON.stringify(details));
+                      });")
+    ) %>%
+    formatRound(c("Z", "SD"), 1) %>%
+    formatStyle(columns = 0:10,
+                valueColumns = "Z",
+                backgroundColor = styleInterval(
+                  quantile(range(-3, 3),
+                           probs = seq(0.05, 0.95, 0.05),
+                           na.rm = TRUE),
+                  colourlist(20)))
+
+}

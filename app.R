@@ -44,80 +44,30 @@ server <- function(input, output, session) {
                         text = session$userData$auth0_info$nickname)
   })
 
-  output$download_rankings <- downloadHandler(
-    filename = function() {
-      glue::glue("DPRankings_{Sys.time()}_{input$rank_type}_{input$position}.xlsx")
-    },
-    content = function(file) {
-      write_xlsx(df_fantasypros(), file)
-    }
-  )
-
   #### Update Pickers ####
 
-  observeEvent(input$rank_type, {
-
-    if (str_detect(input$rank_type, "Dynasty Overall")) {
-      updatePickerInput(session, "position", choices = c("Rookies","All Offense"))
-    }
-
-    if (str_detect(input$rank_type, "Redraft Overall")) {
-      updatePickerInput(session, "position", choices = c("All Offense", "All Defense"))
-    }
-
-    if (str_detect(input$rank_type, "Position")) {
-      updatePickerInput(session, "position", choices = c("QB", "RB", "WR", "TE", "DL", "LB", "DB"))
-    }
-  })
+  observeEvent(input$rank_type, update_position_filter(session,input$rank_type))
 
   #### Load Data ####
 
   df_fantasypros <- reactiveVal()
   init_df <- reactiveVal()
-  replaced_df <- reactiveVal()
-
   nrow_df <- reactiveVal()
-
-  my_order <- reactiveVal()
+  unique_id <- reactiveVal()
 
   observeEvent(input$load, {
 
+    uuid::UUIDgenerate(use.time = TRUE) %>%
+      str_sub(end = 8) %>%
+      unique_id()
+
     loaded_df <- load_fpdata(input$rank_type, input$position) %>%
-      mutate(
-        `Your Rank` = row_number(),
-        Z = round((ecr - `Your Rank`) / sd, 1),
-        sd = round(sd, 1),
-        ecr_type = input$rank_type,
-        ecr_position = input$position,
-        user_id = session$userData$auth0_info$sub,
-        user_nickname = session$userData$auth0_info$nickname,
-        user_name = session$userData$auth0_info$name,
-      ) %>%
-      select(
-        `Player Name` = player_name,
-        Pos = pos,
-        Team = tm,
-        `Your Rank`,
-        `FP Rank` = ecr,
-        Z,
-        SD = sd,
-        Best = best,
-        Worst = worst,
-        `Scrape Date` = scrape_date,
-        fantasypros_id,
-        ecr_type,
-        ecr_position,
-        user_id,
-        user_name,
-        user_nickname
-      )
+      parse_fpdata(session, input$rank_type, input$position)
 
+    # Set reactives with loaded data
     df_fantasypros(loaded_df)
-
     init_df(loaded_df)
-
     nrow_df(nrow(df_fantasypros()))
-    my_order(seq(1, nrow_df()))
 
     Sys.sleep(2)
 
@@ -125,8 +75,6 @@ server <- function(input, output, session) {
   })
 
   #### Datatable ####
-
-  colourlist <- colorRampPalette(brewer.pal(3, "PRGn"))
 
   output$rankings_table <- renderDT({
     init_df() %>%
@@ -138,85 +86,12 @@ server <- function(input, output, session) {
         -user_name,
         -user_nickname
       ) %>%
-      datatable(
-        extensions = "RowReorder",
-        selection = "none",
-        options = list(
-          rowReorder = list(selector = "tr"),
-          order = list(c(4, "asc")),
-          dom = "ftir",
-          paging = FALSE,
-          searching = FALSE,
-          scrollX = TRUE
-        ),
-        callback = JS("table.on('row-reorder',function(e, details, all){
-                      Shiny.onInputChange('row_reorder', JSON.stringify(details));
-                      });")
-      ) %>%
-      formatRound(c("Z", "SD"), 1) %>%
-      formatStyle(columns = 0:10,
-                  valueColumns = "Z",
-                  backgroundColor = styleInterval(
-                    quantile(range(-3, 3),
-                             probs = seq(0.05, 0.95, 0.05),
-                             na.rm = TRUE),
-                    colourlist(20)))
+      rankings_datatable()
+
   })
 
 
   observeEvent(input$row_reorder, { # watching the "reorder" events ----
-
-    apply_reorder <- function(order_info, full_rankings, ranking_length){
-
-      if (is.null(order_info) || class(order_info) != "character") {
-        return()
-      }
-
-      order_info <- read_yaml(text = order_info)
-
-      if(length(order_info)==0){
-        return()
-      }
-      # browser()
-
-      # old_order <- seq_len(nrow_df())
-      new_order <- seq_len(ranking_length)
-
-      for (i in 1:length(order_info)) {
-        j <- order_info[[i]]
-
-        new_order[(j$oldPosition + 1)] <- j$newPosition + 1
-      }
-
-      new_rankings <- full_rankings %>%
-        select(-`Your Rank`) %>%
-        mutate(
-          `Your Rank` = new_order,
-          Z = round((`FP Rank` - `Your Rank`) /SD, 1)
-        ) %>%
-        arrange(`Your Rank`) %>%
-        select(
-          `Player Name`,
-          Pos,
-          Team,
-          `Your Rank`,
-          `FP Rank`,
-          Z,
-          SD,
-          Best,
-          Worst,
-          `Scrape Date`,
-          fantasypros_id,
-          ecr_type,
-          ecr_position,
-          user_id,
-          user_name,
-          user_nickname
-        )
-
-      return(new_rankings)
-
-    }
 
     new_rankings <- apply_reorder(order_info = input$row_reorder,
                                   full_rankings =  df_fantasypros(),
@@ -254,10 +129,7 @@ server <- function(input, output, session) {
 
     showModal(modalDialog("Saving your ranks, please wait!"))
 
-    unique_id <- uuid::UUIDgenerate(use.time = TRUE) %>%
-      str_sub(end = 8)
-
-    file_name <- glue::glue("{unique_id}_{{i}}.parquet")
+    file_name <- glue::glue("{unique_id()}_{{i}}.parquet")
 
     df_fantasypros() %>%
       mutate(
@@ -274,16 +146,34 @@ server <- function(input, output, session) {
 
     Sys.sleep(2)
 
-    removeModal()
-
+    showModal(urlModal(
+      url = unique_id(),
+      title = "Rankings Saved!",
+      subtitle = "Your rankings have been saved to server!
+      You can look up this particular set of rankings later by searching for this session_id. "
+    ))
   })
 
+  output$download_rankings <- downloadHandler(
+    filename = function() {
+      glue::glue("DPRankings_{Sys.time()}_{input$rank_type}_{input$position}.xlsx")
+    },
+    content = function(file) {
+      df_fantasypros() %>%
+        mutate(
+          user_id = str_replace(user_id, "\\|", "_"),
+          session_id = unique_id(),
+          session_timestamp = Sys.time()
+        ) %>%
+        write_xlsx(file)
+    }
+  )
 
 
 }
 
-# options(shiny.port = 8080)
+options(shiny.port = 8080)
 
 shinyAppAuth0(ui, server)
+
 # shinyApp(ui, server)
-#
