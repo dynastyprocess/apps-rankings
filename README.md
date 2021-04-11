@@ -19,5 +19,9 @@
 > -   automatic/weekly sync to latest DP data c/o GH [Done!]
 > -   Add rookie data [Done!]
 > -   minor code cleanups and refactors [Done!]
+> -   tab/interface for retrieving data [Done!]
+> - recalculating standard deviation for players lower than a certain threshold [Done!]
+> - reorder columns
 
--   tab/interface for retrieving data
+- Create a plot to show/highlight players with the highest absolute Z score (i.e. to highlight highest/lowest players compared to average)
+

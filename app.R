@@ -7,7 +7,8 @@ ui <- dashboardPage(
     "Rankings App - DynastyProcess.com"
   ),
   sidebar = ui_sidebar(
-    menuItem("Rankings App", tabName = "rankings", icon = "hat-wizard"),
+    menuItem("Create Rankings", tabName = "rankings", icon = "hat-wizard"),
+    menuItem("Search Rankings", tabName = "history", icon = "bolt"),
     external_menuItem("More by DynastyProcess", "https://dynastyprocess.com", icon = "quidditch"),
     uiOutput("user_info"),
     auth0::logoutButton(label = "Log Out",icon = icon("sign-out"))
@@ -20,14 +21,56 @@ ui <- dashboardPage(
     tabItems(
       tabItem(
         tabName = "rankings",
-        # actionButton("debug", label = "debug"),
-        # br(),
           box_inputs(),
           uiOutput("rankings"),
+      ),
+      tabItem(
+        tabName = "history",
+        # actionButton("debug", label = "debug"),
+        # br(),
+        box(
+          width = 8,
+          title = "Search Rankings",
+          status = "danger",
+          "You can look up your past rankings, or look up a specific Session ID here!",
+          hr(),
+          fluidRow(
+            style = "text-align:center;",
+            column(
+              width = 6,
+              radioGroupButtons(
+                "toggle_session_history",
+                label = NULL,
+                # size = 'normal',
+                choices = c("My History", "Session ID"),
+                selected =  "My History",
+                status = "danger",
+                justified = TRUE,
+                width = '100%',
+                checkIcon = list(yes = icon("ok", lib = "glyphicon"))
+                )),
+            column(6,
+                   conditionalPanel(
+                     condition = "input.toggle_session_history == 'Session ID'",
+                     textInput("session_id",
+                               label = NULL,
+                               placeholder = "Session ID")
+                   )
+                   )
+            ),
+          footer = div(actionButton("load_rankings",
+                                    "Load Rankings",
+                                    icon = icon("list-ol"),
+                                    class = "btn-success"),
+                       style = "text-align:center;")
+        ),
+        uiOutput("box_history")
       )
+
     )
   )
 )
+
 
 server <- function(input, output, session) {
 
@@ -50,6 +93,7 @@ server <- function(input, output, session) {
   init_df <- reactiveVal()
   nrow_df <- reactiveVal()
   unique_id <- reactiveVal()
+  history_rankings <- reactiveVal()
 
   observeEvent(input$load, {
 
@@ -130,15 +174,16 @@ server <- function(input, output, session) {
     df_fantasypros() %>%
       mutate(
         user_id = str_replace(user_id, "\\|", "_"),
-        timestamp = Sys.time()
+        session_timestamp = Sys.time(),
+        session_id = unique_id(),
       ) %>%
       mutate_if(is.numeric,as.double) %>%
       write_dataset(
         path = "storage",
         format = "parquet",
-        partitioning = c("ecr_type","ecr_position","user_id"),
+        partitioning = c("ecr_type","ecr_position","user_id","session_id"),
         basename_template = file_name,
-        hive_style = FALSE
+        hive_style = TRUE
       )
 
     Sys.sleep(2)
@@ -166,11 +211,111 @@ server <- function(input, output, session) {
     }
   )
 
+  #### Load Rankings ####
+
+  observeEvent(input$load_rankings, {
+
+    showModal(modalDialog("Loading ranks, please wait!"))
+
+    storage <- arrow::open_dataset(sources = "storage")
+
+    # s_user_id <- "twitter_839942645883551744"
+    # s_session_id <- "ef7be5f8"
+
+    s_user_id <- str_replace(session[['userData']][["auth0_info"]][["sub"]], "\\|", "_")
+    s_session_id <- input$session_id
+
+
+    if(input$toggle_session_history == "My History") {
+
+      loaded_rankings <- storage %>%
+        filter(
+          user_id == s_user_id
+        ) %>%
+        select(
+          `Timestamp` = session_timestamp, session_id, user_nickname,
+          `Player Name`, `Pos`, `Team`, `Your Rank`, `FP Rank`, Z, SD, Best, Worst,
+          fantasypros_id, ecr_type, ecr_position
+        ) %>%
+        collect() %>%
+        group_by(session_id) %>%
+        filter(Timestamp == max(Timestamp)) %>%
+        ungroup()
+
+    }
+
+    if(input$toggle_session_history == "Session ID"){
+
+      loaded_rankings <- storage %>%
+        filter(
+          session_id == s_session_id
+        ) %>%
+        select(
+          `Timestamp` = session_timestamp, session_id, user_nickname,
+          `Player Name`, `Pos`, `Team`, `Your Rank`, `FP Rank`, Z, SD, Best, Worst,
+          fantasypros_id, ecr_type, ecr_position
+        ) %>%
+        collect() %>%
+        group_by(session_id) %>%
+        filter(Timestamp == max(Timestamp)) %>%
+        ungroup()
+    }
+
+    history_rankings(loaded_rankings)
+
+    Sys.sleep(1)
+
+    removeModal()
+  })
+
+  output$history_rankings <- renderDT({
+
+    req(input$load_rankings)
+
+    colourlist <- colorRampPalette(brewer.pal(3, "PRGn"))
+
+    history_rankings() %>%
+      mutate_at(c("session_id","Player Name","Pos","fantasypros_id"), as.factor) %>%
+      datatable(
+        filter = "top",
+        options = list(
+          scrollX = TRUE
+        ),
+        class = "compact stripe nowrap",
+        rownames = FALSE,
+        selection = "none"
+      ) %>%
+      formatRound(c("Z", "SD"), 1) %>%
+      formatDate("Timestamp") %>%
+      formatStyle(columns = 1:16,
+                  valueColumns = "Z",
+                  backgroundColor = styleInterval(
+                    quantile(range(-3, 3),
+                             probs = seq(0.05, 0.95, 0.05),
+                             na.rm = TRUE),
+                    colourlist(20)))
+
+  })
+
+  output$box_history <- renderUI({
+
+    req(input$load_rankings)
+
+    box(
+      width = 12,
+      title = "Rankings Lookup",
+      status = "danger",
+      DTOutput("history_rankings")
+    )
+
+  })
+
+
 
 }
 
 options(shiny.port = 8080)
 
-# shinyAppAuth0(ui, server)
+shinyAppAuth0(ui, server)
 
-shinyApp(ui, server)
+# shinyApp(ui, server)

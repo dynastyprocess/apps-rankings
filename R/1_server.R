@@ -24,28 +24,31 @@ load_fpdata <- function(type, position){
 
   fantasypros_raw <- read_parquet("data/fantasypros_raw.parquet") %>%
     filter(ecr_type == type) %>%
-    mutate(sd = case_when(is.null(sd)~ecr^0.6,
-                          sd == 0 ~ ecr^0.6,
-                          # ecr > 32 ~ ecr^0.6,
+    mutate(sd = case_when(is.null(sd)~ecr^0.6, # if SD is missing, proxy it as ecr^0.6 so that Z scores are still there
+                          sd == 0 ~ ecr^0.6, # if SD is zero, Z scores are INF so set it as 1
+                          ecr > 32 ~ ecr^0.6, # SDs for fantasypros are too low for players after a certain threshold which makes for wonky Z scores
                           TRUE ~ sd))
 
   if(str_detect(type, "o$|sf$|rk$")) {
 
     if(position == "All Offense") {
       fantasypros_raw <- fantasypros_raw %>%
-        filter(pos %in% c("QB","RB","WR","TE"))
+        filter(pos %in% c("QB","RB","WR","TE"))%>%
+        arrange(ecr)
     }
 
     if(position == "All Defense"){
       fantasypros_raw <- fantasypros_raw %>%
-        filter(pos %in% c("DL","LB","DB"))
+        filter(pos %in% c("DL","LB","DB"))%>%
+        arrange(ecr)
     }
 
     return(fantasypros_raw)
   }
 
   fantasypros_raw <- fantasypros_raw %>%
-    filter(pos == position)
+    filter(pos == position) %>%
+    arrange(ecr)
 
   return(fantasypros_raw)
 }
