@@ -52,6 +52,10 @@ load_fpdata <- function(type, position){
 
 parse_fpdata <- function(fp_data, session, input_rank_type, input_position){
 
+  s_user_id <- session[['userData']][["auth0_info"]][["sub"]] %||% "no_user_id"
+  s_user_nickname <- session$userData$auth0_info$nickname %||% "no_user_nickname"
+  s_user_name <- session$userData$auth0_info$name %||% "no_user_name"
+
   fp_data %>%
     mutate(
       `Your Rank` = row_number(),
@@ -59,9 +63,9 @@ parse_fpdata <- function(fp_data, session, input_rank_type, input_position){
       sd = round(sd, 1),
       ecr_type = input_rank_type,
       ecr_position = input_position,
-      user_id = session$userData$auth0_info$sub,
-      user_nickname = session$userData$auth0_info$nickname,
-      user_name = session$userData$auth0_info$name,
+      user_id = s_user_id,
+      user_nickname = s_user_nickname,
+      user_name = s_user_name,
     ) %>%
     select(
       `Player Name` = player_name,

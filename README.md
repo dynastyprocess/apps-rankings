@@ -18,6 +18,6 @@
 > -   deploy to server [Done!]
 > -   automatic/weekly sync to latest DP data c/o GH [Done!]
 > -   Add rookie data [Done!]
+> -   minor code cleanups and refactors [Done!]
 
 -   tab/interface for retrieving data
--   minor code cleanups and refactors

@@ -20,14 +20,14 @@ ui <- dashboardPage(
     tabItems(
       tabItem(
         tabName = "rankings",
+        # actionButton("debug", label = "debug"),
+        # br(),
         fluidRow(
           box_inputs(),
         ),
         fluidRow(
           uiOutput("rankings"),
         )
-        # br(),
-        # actionButton("debug", label = "debug")
       )
     )
   )
@@ -156,7 +156,7 @@ server <- function(input, output, session) {
 
   output$download_rankings <- downloadHandler(
     filename = function() {
-      glue::glue("DPRankings_{Sys.time()}_{input$rank_type}_{input$position}.xlsx")
+      glue::glue("DPRankings_{format(Sys.time(),format = '%Y%m%d%H%M%S')}_{input$rank_type}_{input$position}.xlsx")
     },
     content = function(file) {
       df_fantasypros() %>%
