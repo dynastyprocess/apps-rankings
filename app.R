@@ -277,7 +277,7 @@ server <- function(input, output, session) {
 
 }
 
-options(shiny.port = 8080)
+# options(shiny.port = 8080)
 
 shinyAppAuth0(ui, server)
 # shinyApp(ui, server)
