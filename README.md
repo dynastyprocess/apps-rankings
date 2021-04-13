@@ -25,3 +25,5 @@
 
 - Create a plot to show/highlight players with the highest absolute Z score (i.e. to highlight highest/lowest players compared to average)
 - Import session ID (rename as rankings ID) as a template for making new rankings
+- Add meta tags
+- Add age column
