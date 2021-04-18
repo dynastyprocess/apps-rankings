@@ -22,8 +22,8 @@
 > -   tab/interface for retrieving data [Done!]
 > - recalculating standard deviation for players lower than a certain threshold [Done!]
 > - reorder columns
+> - Add meta tags (c/o metathis package) [Done!]
+> - Add age column [Done!]
+> - Import session ID (rename as rankings ID) as a template for making new rankings
 
 - Create a plot to show/highlight players with the highest absolute Z score (i.e. to highlight highest/lowest players compared to average)
-- Import session ID (rename as rankings ID) as a template for making new rankings
-- Add meta tags
-- Add age column

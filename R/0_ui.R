@@ -9,7 +9,6 @@ suppressPackageStartupMessages({
 
   # Data manipulation
   library(tidyverse)
-  library(janitor)
   library(lubridate)
   library(glue)
   library(magrittr)
@@ -20,13 +19,13 @@ suppressPackageStartupMessages({
   library(shiny)
   library(bs4Dash)
   library(shinyWidgets)
-  library(reactable)
   library(DT)
   library(RColorBrewer)
   library(waiter)
   library(sever)
   library(auth0)
   library(uuid)
+  library(metathis)
 
   # Data output
   library(writexl)
@@ -148,12 +147,16 @@ box_rankings <- function(ranking_type, position){
              div(
                style = "text-align:center;",
                actionButton("save_rankings",
-                            "Save Rankings",
+                            "Save",
                             icon = icon("quidditch"),
                             class = "btn-primary"),
                downloadButton("download_rankings",
-                              "Download Rankings",
-                              class = "btn-success")
+                              "Download",
+                              class = "btn-success"),
+               actionButton("import_rankings",
+                            "Import",
+                            icon = icon("file-import"),
+                            class = "btn-danger")
              )
       )
     ),
@@ -193,7 +196,7 @@ rankings_datatable <- function(input_df){
       selection = "none",
       options = list(
         rowReorder = list(selector = "tr"),
-        order = list(c(4, "asc")),
+        order = list(c(5, "asc")),
         dom = "ftir",
         paging = FALSE,
         searching = FALSE,
@@ -204,7 +207,7 @@ rankings_datatable <- function(input_df){
                       });")
     ) %>%
     formatRound(c("Z", "SD"), 1) %>%
-    formatStyle(columns = 0:10,
+    formatStyle(columns = 0:11,
                 valueColumns = "Z",
                 backgroundColor = styleInterval(
                   quantile(range(-3, 3),

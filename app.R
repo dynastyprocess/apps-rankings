@@ -14,6 +14,17 @@ ui <- dashboardPage(
     auth0::logoutButton(label = "Log Out",icon = icon("sign-out"))
   ),
   body = dashboardBody(
+    meta() %>%
+      meta_social(
+        title = "Rankings - DynastyProcess.com",
+        description = "An interface for creating fantasy football rankings",
+        url = "https://apps.dynastyprocess.com",
+        image = "https://raw.githubusercontent.com/dynastyprocess/graphics/main/.dynastyprocess/logo-hex-small.png",
+        image_alt = "An interface for creating fantasy football rankings",
+        twitter_creator = "@_TanHo",
+        twitter_card_type = "summary",
+        twitter_site = "@DynastyProcess"
+      ),
     includeCSS("dp.css"),
     use_waiter(),
     waiter_on_busy(html = spin_dots(), color = transparent(0.3)),
@@ -21,8 +32,8 @@ ui <- dashboardPage(
     tabItems(
       tabItem(
         tabName = "rankings",
-          box_inputs(),
-          uiOutput("rankings"),
+        box_inputs(),
+        uiOutput("rankings"),
       ),
       tabItem(
         tabName = "history",
@@ -48,7 +59,7 @@ ui <- dashboardPage(
                 justified = TRUE,
                 width = '100%',
                 checkIcon = list(yes = icon("ok", lib = "glyphicon"))
-                )),
+              )),
             column(6,
                    conditionalPanel(
                      condition = "input.toggle_session_history == 'Session ID'",
@@ -56,8 +67,8 @@ ui <- dashboardPage(
                                label = NULL,
                                placeholder = "Session ID")
                    )
-                   )
-            ),
+            )
+          ),
           footer = div(actionButton("load_rankings",
                                     "Load Rankings",
                                     icon = icon("list-ol"),
@@ -192,7 +203,7 @@ server <- function(input, output, session) {
       url = unique_id(),
       title = "Rankings Saved!",
       subtitle = "Your rankings have been saved to server!
-      You can look up this particular set of rankings later by searching for this session_id. "
+      You can look up this particular set of rankings later by searching for this rankings_id. "
     ))
   })
 
@@ -233,12 +244,27 @@ server <- function(input, output, session) {
           user_id == s_user_id
         ) %>%
         select(
-          `Timestamp` = session_timestamp, session_id, user_nickname,
-          `Player Name`, `Pos`, `Team`, `Your Rank`, `FP Rank`, Z, SD, Best, Worst,
-          fantasypros_id, ecr_type, ecr_position
+          any_of(c(
+            "Timestamp" = "session_timestamp",
+            "rankings_id"="session_id",
+            "user_nickname",
+            "Player Name",
+            "Pos",
+            "Team",
+            "Age",
+            "Your Rank",
+            "FP Rank",
+            "Z",
+            "SD",
+            "Best",
+            "Worst",
+            "fantasypros_id",
+            "ecr_type",
+            "ecr_position"
+          ))
         ) %>%
         collect() %>%
-        group_by(session_id) %>%
+        group_by(rankings_id) %>%
         filter(Timestamp == max(Timestamp)) %>%
         ungroup()
 
@@ -251,12 +277,27 @@ server <- function(input, output, session) {
           session_id == s_session_id
         ) %>%
         select(
-          `Timestamp` = session_timestamp, session_id, user_nickname,
-          `Player Name`, `Pos`, `Team`, `Your Rank`, `FP Rank`, Z, SD, Best, Worst,
-          fantasypros_id, ecr_type, ecr_position
+          any_of(c(
+            "Timestamp" = "session_timestamp",
+            "rankings_id"="session_id",
+            "user_nickname",
+            "Player Name",
+            "Pos",
+            "Team",
+            "Age",
+            "Your Rank",
+            "FP Rank",
+            "Z",
+            "SD",
+            "Best",
+            "Worst",
+            "fantasypros_id",
+            "ecr_type",
+            "ecr_position"
+          ))
         ) %>%
         collect() %>%
-        group_by(session_id) %>%
+        group_by(rankings_id) %>%
         filter(Timestamp == max(Timestamp)) %>%
         ungroup()
     }
@@ -275,7 +316,7 @@ server <- function(input, output, session) {
     colourlist <- colorRampPalette(brewer.pal(3, "PRGn"))
 
     history_rankings() %>%
-      mutate_at(c("session_id","Player Name","Pos","fantasypros_id"), as.factor) %>%
+      mutate_at(c("rankings_id","Player Name","Pos","fantasypros_id"), as.factor) %>%
       datatable(
         filter = "top",
         options = list(
@@ -310,6 +351,90 @@ server <- function(input, output, session) {
 
   })
 
+  #### Import Rankings ####
+
+  observeEvent(input$import_rankings, {
+    showModal(modalDialog(
+      easyClose = TRUE,
+      title = "Load Rankings ID",
+      textInput("import_rankings_id", label = NULL, placeholder = "Rankings ID"),
+      footer = list(
+        actionButton("import_rankings_load", "Load!", class = "btn-danger"),
+        modalButton("Cancel")
+      )
+    ))
+  })
+
+  observeEvent(input$import_rankings_load, {
+
+    req(input$import_rankings_id)
+
+    # CHECK IF RANKINGS ID EXISTS
+
+    imported_rankings <- open_dataset("storage") %>%
+      filter(session_id == input$import_rankings_id) %>%
+      collect()
+
+    if(nrow(imported_rankings)==0) return(
+      showModal(modalDialog(
+        title = "Error",
+        glue::glue("Could not find Rankings ID {input$import_rankings_id} in our database")
+      ))
+    )
+
+    # CHECK IF RANKINGS ID TYPE MATCHES THE CURRENT TYPE
+
+
+    if(imported_rankings$ecr_type[[1]] != input$rank_type |
+       imported_rankings$ecr_position[[1]] != input$position) {
+
+      return(
+        showModal(modalDialog(
+          title = "Error",
+          glue::glue("The imported rankings are for
+                     {imported_rankings$ecr_type[[1]]} - {imported_rankings$ecr_position[[1]]}
+                     and not for the currently selected {input$rank_type} - {input$position}")
+        ))
+      )
+    }
+
+    # REORDER df_fantasypros() by the Imported Rankings
+    # SET df_fantasypros to this new Import
+    # REPLACE DATA
+
+    overwrite_current <- df_fantasypros() %>%
+      select(-`Your Rank`) %>%
+      left_join(
+        imported_rankings %>% select(fantasypros_id,`Your Rank`),
+        by = "fantasypros_id"
+      ) %>%
+      arrange(`Your Rank`) %>%
+      relocate(`Your Rank`, .after = Age) %>%
+      mutate(Z = round((`FP Rank` - `Your Rank`) /SD, 1))
+
+    df_fantasypros(overwrite_current)
+
+    replaced_data <- overwrite_current %>%
+      select(
+        -ecr_type,
+        -ecr_position,
+        -fantasypros_id,
+        -user_id,
+        -user_name,
+        -user_nickname)
+
+    DT::replaceData(proxy = DT::dataTableProxy("rankings_table"),
+                    data = replaced_data)
+
+    Sys.sleep(1)
+
+    showModal(modalDialog(
+      title = "Success!",
+      easyClose = TRUE,
+      glue("Imported rankings ID {input$import_rankings_id}, which was previously submitted on: {imported_rankings$session_timestamp[[1]]} ")
+    ))
+
+  })
 
 
 }
