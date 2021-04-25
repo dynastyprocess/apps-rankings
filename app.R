@@ -243,9 +243,13 @@ server <- function(input, output, session) {
 
   observeEvent(input$import_rankings_load, {
 
-    req(input$import_rankings_id)
 
-    overwrite_current_rankings <- fn_import_rankings(input$import_rankings_id, df_fantasypros())
+    req(input$import_rankings_id)
+    overwrite_current_rankings <- fn_import_rankings(session,
+                                                     input$import_rankings_id,
+                                                     df_fantasypros(),
+                                                     selected_rank_type(),
+                                                     selected_position())
 
     # REORDER df_fantasypros() by the Imported Rankings
     # SET df_fantasypros to this new Import
@@ -260,7 +264,8 @@ server <- function(input, output, session) {
         -fantasypros_id,
         -user_id,
         -user_name,
-        -user_nickname)
+        -user_nickname,
+        -session_timestamp)
 
     DT::replaceData(proxy = DT::dataTableProxy("rankings_table"),
                     data = replaced_data)
@@ -270,7 +275,7 @@ server <- function(input, output, session) {
     showModal(modalDialog(
       title = "Success!",
       easyClose = TRUE,
-      glue("Imported rankings ID {input$import_rankings_id}, which was previously submitted on: {imported_rankings$session_timestamp[[1]]} ")
+      glue("Imported rankings ID {input$import_rankings_id}, which was previously submitted on: {overwrite_current_rankings$session_timestamp[[1]]} ")
     ))
 
   })
@@ -290,7 +295,7 @@ server <- function(input, output, session) {
     s_user_id <- str_replace(session[['userData']][["auth0_info"]][["sub"]], "\\|", "_")
     s_session_id <- input$session_id
 
-    load_rankings_from_storage(s_user_id,s_session_id,load_type)
+    loaded_rankings <- load_rankings_from_storage(s_user_id,s_session_id,load_type())
 
     history_rankings(loaded_rankings)
 
@@ -317,8 +322,6 @@ server <- function(input, output, session) {
   output$history_rankings <- renderDT({
 
     req(input$load_rankings)
-
-    colourlist <- colorRampPalette(brewer.pal(3, "PRGn"))
 
     table_historyrankings(history_rankings())
   })
@@ -349,9 +352,9 @@ server <- function(input, output, session) {
     req(input$load_rankings)
     req(nrow(history_rankings() > 0))
 
-    player_names <- fn_prepopulate_playernames(history_rankings())
+    player_names <- fn_prepopulate_playernames(history_rankings(),load_type())
 
-    fn_box_history(history_rankings())
+    fn_box_historyviz(history_rankings(), player_names)
   })
 
 }

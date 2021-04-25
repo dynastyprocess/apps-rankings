@@ -1,6 +1,8 @@
 table_historyrankings <- function(history_rankings){
 
-  history_rankings() %>%
+  colourlist <- colorRampPalette(brewer.pal(3, "PRGn"))
+
+  history_rankings %>%
     mutate_at(c("rankings_id","Player Name","Pos","fantasypros_id"), as.factor) %>%
     datatable(
       filter = "top",

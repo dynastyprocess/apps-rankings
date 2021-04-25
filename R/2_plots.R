@@ -6,7 +6,7 @@ plot_rankingsviz <- function(load_type, history_rankings, player_names){
 }
 
 
-plot_myhistory <- function(history_rankings, player_names = NULL){
+.plot_myhistory <- function(history_rankings, player_names = NULL){
 
   if(is.null(player_names)) {
 
@@ -35,7 +35,7 @@ plot_myhistory <- function(history_rankings, player_names = NULL){
       )) +
     theme_minimal() +
     geom_point_interactive() +
-    geom_line(stat = "smooth", alpha = 0.5, method = "glm", se = FALSE) +
+    geom_line(stat = "smooth", alpha = 0.5, method = "glm", formula = "y~x", se = FALSE) +
     scale_fill_brewer(palette = "Set2",direction = -1,aesthetics = c("colour","fill")) +
     labs(
       title = glue("Your Rankings vs FantasyPros"),
@@ -49,7 +49,7 @@ plot_myhistory <- function(history_rankings, player_names = NULL){
   return(df_plot)
 }
 
-plot_sessionID <- function(history_rankings, player_names){
+.plot_sessionID <- function(history_rankings, player_names){
 
   if(is.null(player_names)) {
 

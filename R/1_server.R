@@ -214,9 +214,9 @@ load_rankings_from_storage <- function(s_user_id, s_session_id, load_type){
   return(loaded_rankings)
 }
 
-fn_prepopulate_playernames<- function(history_rankings){
+fn_prepopulate_playernames<- function(history_rankings, load_type){
 
-  if(load_type() == "My History") {
+  if(load_type == "My History") {
     player_names <- history_rankings %>%
       arrange(desc(Z)) %>%
       distinct(`Player Name`, .keep_all = TRUE) %>%
@@ -224,54 +224,55 @@ fn_prepopulate_playernames<- function(history_rankings){
       pull(`Player Name`)
   }
 
-if(load_type() == "Ranking ID") {
-  player_names <- history_rankings %>%
-    arrange(desc(Z)) %>%
-    distinct(`Player Name`, .keep_all = TRUE) %>%
-    slice(1:5, (nrow(.)- 4):nrow(.)) %>%
-    pull(`Player Name`)
+  if(load_type == "Ranking ID") {
+    player_names <- history_rankings %>%
+      arrange(desc(Z)) %>%
+      distinct(`Player Name`, .keep_all = TRUE) %>%
+      slice(1:5, (nrow(.)- 4):nrow(.)) %>%
+      pull(`Player Name`)
+  }
+
+  return(player_names)
 }
 
-return(player_names)
-}
-
-fn_import_rankings <- function(session, import_rankings_id, df_fantasypros){
+fn_import_rankings <- function(session, import_rankings_id, df_fantasypros, selected_rank_type, selected_position){
 
   imported_rankings <- open_dataset("storage") %>%
     filter(session_id == import_rankings_id) %>%
     collect()
-}
-# CHECK IF RANKINGS ID EXISTS
-if(nrow(imported_rankings)==0) return(
-  showModal(modalDialog(
-    title = "Error",
-    glue::glue("Could not find Rankings ID {input$import_rankings_id} in our database")
-  ),
-  session = session)
-)
-# CHECK IF RANKINGS ID TYPE MATCHES THE CURRENT TYPE
-if(imported_rankings$ecr_type[[1]] != selected_rank_type() |
-   imported_rankings$ecr_position[[1]] != selected_position()) {
 
-  return(
+  # CHECK IF RANKINGS ID EXISTS
+  if(nrow(imported_rankings)==0) return(
     showModal(modalDialog(
       title = "Error",
-      glue::glue("The imported rankings are for
-                     {imported_rankings$ecr_type[[1]]} - {imported_rankings$ecr_position[[1]]}
-                     and not for the currently selected {selected_rank_type()} - {selected_position()}")
+      glue::glue("Could not find Rankings ID {import_rankings_id} in our database")
     ),
     session = session)
   )
+  # CHECK IF RANKINGS ID TYPE MATCHES THE CURRENT TYPE
+  if(imported_rankings$ecr_type[[1]] != selected_rank_type |
+     imported_rankings$ecr_position[[1]] != selected_position) {
 
-  overwrite_current <- df_fantasypros %>%
-    select(-`Your Rank`) %>%
-    left_join(
-      imported_rankings %>% select(fantasypros_id,`Your Rank`),
-      by = "fantasypros_id"
-    ) %>%
-    arrange(`Your Rank`) %>%
-    relocate(`Your Rank`, .after = Age) %>%
-    mutate(Z = round((`FP Rank` - `Your Rank`) /SD, 1))
+    return(
+      showModal(modalDialog(
+        title = "Error",
+        glue::glue("The imported rankings are for
+                     {imported_rankings$ecr_type[[1]]} - {imported_rankings$ecr_position[[1]]}
+                     and not for the currently selected {selected_rank_type} - {selected_position}")
+      ),
+      session = session)
+    )
+  }
 
-  return(overwrite_current)
+    overwrite_current <- df_fantasypros %>%
+      select(-`Your Rank`) %>%
+      left_join(
+        imported_rankings %>% select(fantasypros_id,`Your Rank`,session_timestamp),
+        by = "fantasypros_id"
+      ) %>%
+      arrange(`Your Rank`) %>%
+      relocate(`Your Rank`, .after = Age) %>%
+      mutate(Z = round((`FP Rank` - `Your Rank`) /SD, 1))
+
+    return(overwrite_current)
 }

@@ -187,7 +187,7 @@ update_position_filter <- function(session, rank_type){
   }
 }
 
-fn_box_historyviz <- function(history_rankings){
+fn_box_historyviz <- function(history_rankings, player_names){
 
   tagList(
     pickerInput(
