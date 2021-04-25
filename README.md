@@ -25,5 +25,12 @@
 > - Add meta tags (c/o metathis package) [Done!]
 > - Add age column [Done!]
 > - Import session ID (rename as rankings ID) as a template for making new rankings
+> IF my_history THEN show single or up to three players, plotting Z score over time, X = TIME, Y = Z [Done!]
+
 
 - Create a plot to show/highlight players with the highest absolute Z score (i.e. to highlight highest/lowest players compared to average)
+
+IF session_id THEN show bar plot with x = Z, y = player of top five and bottom five (and allow filtering for specific players)
+
+
+

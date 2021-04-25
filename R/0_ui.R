@@ -26,6 +26,7 @@ suppressPackageStartupMessages({
   library(auth0)
   library(uuid)
   library(metathis)
+  library(ggiraph)
 
   # Data output
   library(writexl)

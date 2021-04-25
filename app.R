@@ -39,48 +39,53 @@ ui <- dashboardPage(
         tabName = "history",
         # actionButton("debug", label = "debug"),
         # br(),
-        box(
-          width = 8,
-          title = "Search Rankings",
-          status = "danger",
-          "You can look up your past rankings, or look up a specific Session ID here!",
-          hr(),
-          fluidRow(
-            style = "text-align:center;",
-            column(
-              width = 6,
-              radioGroupButtons(
-                "toggle_session_history",
-                label = NULL,
-                # size = 'normal',
-                choices = c("My History", "Session ID"),
-                selected =  "My History",
-                status = "danger",
-                justified = TRUE,
-                width = '100%',
-                checkIcon = list(yes = icon("ok", lib = "glyphicon"))
-              )),
-            column(6,
-                   conditionalPanel(
-                     condition = "input.toggle_session_history == 'Session ID'",
-                     textInput("session_id",
-                               label = NULL,
-                               placeholder = "Session ID")
-                   )
-            )
+        fluidRow(
+          box(
+            width = 4,
+            title = "Search Rankings",
+            status = "danger",
+            "You can look up your past rankings, or look up a specific Session ID here!",
+            hr(),
+            fluidRow(
+              style = "text-align:center;",
+              column(
+                width = 6,
+                radioGroupButtons(
+                  "toggle_session_history",
+                  label = NULL,
+                  # size = 'normal',
+                  choices = c("My History", "Ranking ID"),
+                  selected =  "My History",
+                  status = "danger",
+                  justified = TRUE,
+                  width = '100%',
+                  checkIcon = list(yes = icon("ok", lib = "glyphicon"))
+                )),
+              column(6,
+                     conditionalPanel(
+                       condition = "input.toggle_session_history == 'Ranking ID'",
+                       textInput("session_id",
+                                 label = NULL,
+                                 placeholder = "Session ID")
+                     )
+              )
+            ),
+            footer = div(actionButton("load_rankings",
+                                      "Load Rankings",
+                                      icon = icon("list-ol"),
+                                      class = "btn-success"),
+                         style = "text-align:center;")
           ),
-          footer = div(actionButton("load_rankings",
-                                    "Load Rankings",
-                                    icon = icon("list-ol"),
-                                    class = "btn-success"),
-                       style = "text-align:center;")
+          uiOutput("box_historyviz", container = box,  width = 8,   title = "Rankings Chart",  status = "danger"),
         ),
+
         uiOutput("box_history")
       )
 
     )
   )
 )
+
 
 
 server <- function(input, output, session) {
@@ -140,7 +145,6 @@ server <- function(input, output, session) {
       rankings_datatable()
 
   })
-
 
   observeEvent(input$row_reorder, { # watching the "reorder" events ----
 
@@ -221,135 +225,6 @@ server <- function(input, output, session) {
         write_xlsx(file)
     }
   )
-
-  #### Load Rankings ####
-
-  observeEvent(input$load_rankings, {
-
-    showModal(modalDialog("Loading ranks, please wait!"))
-
-    storage <- arrow::open_dataset(sources = "storage")
-
-    # s_user_id <- "twitter_839942645883551744"
-    # s_session_id <- "ef7be5f8"
-
-    s_user_id <- str_replace(session[['userData']][["auth0_info"]][["sub"]], "\\|", "_")
-    s_session_id <- input$session_id
-
-
-    if(input$toggle_session_history == "My History") {
-
-      loaded_rankings <- storage %>%
-        filter(
-          user_id == s_user_id
-        ) %>%
-        select(
-          any_of(c(
-            "Timestamp" = "session_timestamp",
-            "rankings_id"="session_id",
-            "user_nickname",
-            "Player Name",
-            "Pos",
-            "Team",
-            "Age",
-            "Your Rank",
-            "FP Rank",
-            "Z",
-            "SD",
-            "Best",
-            "Worst",
-            "fantasypros_id",
-            "ecr_type",
-            "ecr_position"
-          ))
-        ) %>%
-        collect() %>%
-        group_by(rankings_id) %>%
-        filter(Timestamp == max(Timestamp)) %>%
-        ungroup()
-
-    }
-
-    if(input$toggle_session_history == "Session ID"){
-
-      loaded_rankings <- storage %>%
-        filter(
-          session_id == s_session_id
-        ) %>%
-        select(
-          any_of(c(
-            "Timestamp" = "session_timestamp",
-            "rankings_id"="session_id",
-            "user_nickname",
-            "Player Name",
-            "Pos",
-            "Team",
-            "Age",
-            "Your Rank",
-            "FP Rank",
-            "Z",
-            "SD",
-            "Best",
-            "Worst",
-            "fantasypros_id",
-            "ecr_type",
-            "ecr_position"
-          ))
-        ) %>%
-        collect() %>%
-        group_by(rankings_id) %>%
-        filter(Timestamp == max(Timestamp)) %>%
-        ungroup()
-    }
-
-    history_rankings(loaded_rankings)
-
-    Sys.sleep(1)
-
-    removeModal()
-  })
-
-  output$history_rankings <- renderDT({
-
-    req(input$load_rankings)
-
-    colourlist <- colorRampPalette(brewer.pal(3, "PRGn"))
-
-    history_rankings() %>%
-      mutate_at(c("rankings_id","Player Name","Pos","fantasypros_id"), as.factor) %>%
-      datatable(
-        filter = "top",
-        options = list(
-          scrollX = TRUE
-        ),
-        class = "compact stripe nowrap",
-        rownames = FALSE,
-        selection = "none"
-      ) %>%
-      formatRound(c("Z", "SD"), 1) %>%
-      formatDate("Timestamp") %>%
-      formatStyle(columns = 1:16,
-                  valueColumns = "Z",
-                  backgroundColor = styleInterval(
-                    quantile(range(-3, 3),
-                             probs = seq(0.05, 0.95, 0.05),
-                             na.rm = TRUE),
-                    colourlist(20)))
-
-  })
-
-  output$box_history <- renderUI({
-
-    req(input$load_rankings)
-
-    box(
-      width = 12,
-      title = "Rankings Lookup",
-      status = "danger",
-      DTOutput("history_rankings")
-    )
-
-  })
 
   #### Import Rankings ####
 
@@ -435,6 +310,253 @@ server <- function(input, output, session) {
     ))
 
   })
+
+  #### Load Rankings ####
+  load_type <- eventReactive(input$load_rankings, input$toggle_session_history)
+
+  observeEvent(input$load_rankings, {
+
+    showModal(modalDialog("Loading ranks, please wait!"))
+
+    storage <- arrow::open_dataset(sources = "storage")
+
+    # s_user_id <- "twitter_839942645883551744"
+    # s_session_id <- "ef7be5f8"
+
+    s_user_id <- str_replace(session[['userData']][["auth0_info"]][["sub"]], "\\|", "_")
+    s_session_id <- input$session_id
+
+
+    if(load_type() == "My History") {
+
+      loaded_rankings <- storage %>%
+        filter(
+          user_id == s_user_id
+        ) %>%
+        select(
+          any_of(c(
+            "Timestamp" = "session_timestamp",
+            "rankings_id"="session_id",
+            "user_nickname",
+            "Player Name",
+            "Pos",
+            "Team",
+            "Age",
+            "Your Rank",
+            "FP Rank",
+            "Z",
+            "SD",
+            "Best",
+            "Worst",
+            "fantasypros_id",
+            "ecr_type",
+            "ecr_position"
+          ))
+        ) %>%
+        collect() %>%
+        group_by(rankings_id) %>%
+        filter(Timestamp == max(Timestamp)) %>%
+        ungroup()
+
+    }
+
+    if(load_type() == "Ranking ID"){
+
+      loaded_rankings <- storage %>%
+        filter(
+          session_id == s_session_id
+        ) %>%
+        select(
+          any_of(c(
+            "Timestamp" = "session_timestamp",
+            "rankings_id" = "session_id",
+            "user_nickname",
+            "Player Name",
+            "Pos",
+            "Team",
+            "Age",
+            "Your Rank",
+            "FP Rank",
+            "Z",
+            "SD",
+            "Best",
+            "Worst",
+            "fantasypros_id",
+            "ecr_type",
+            "ecr_position"
+          ))
+        ) %>%
+        collect() %>%
+        group_by(rankings_id) %>%
+        filter(Timestamp == max(Timestamp)) %>%
+        ungroup()
+    }
+
+    history_rankings(loaded_rankings)
+
+    Sys.sleep(1)
+
+    removeModal()
+  })
+
+  output$history_rankings <- renderDT({
+
+    req(input$load_rankings)
+
+    colourlist <- colorRampPalette(brewer.pal(3, "PRGn"))
+
+    history_rankings() %>%
+      mutate_at(c("rankings_id","Player Name","Pos","fantasypros_id"), as.factor) %>%
+      datatable(
+        filter = "top",
+        options = list(
+          scrollX = TRUE
+        ),
+        class = "compact stripe nowrap",
+        rownames = FALSE,
+        selection = "none"
+      ) %>%
+      formatRound(c("Z", "SD"), 1) %>%
+      formatDate("Timestamp") %>%
+      formatStyle(columns = 1:16,
+                  valueColumns = "Z",
+                  backgroundColor = styleInterval(
+                    quantile(range(-3, 3),
+                             probs = seq(0.05, 0.95, 0.05),
+                             na.rm = TRUE),
+                    colourlist(20)))
+
+  })
+
+  output$box_history <- renderUI({
+
+    req(input$load_rankings)
+
+    box(
+      width = 12,
+      title = "Rankings Lookup",
+      status = "danger",
+      DTOutput("history_rankings")
+    )
+
+  })
+
+  #### Visualization Plots ####
+
+  output$rankings_viz <- renderGirafe({
+
+    req(input$load_rankings)
+
+    req(input$historyplot_playernames)
+
+    if(load_type() == "My History") history_plot <- plot_myhistory(history_rankings(), input$historyplot_playernames)
+
+    if(load_type() == "Ranking ID") history_plot <- plot_sessionID(history_rankings(), input$historyplot_playernames)
+
+    girafe(ggobj = history_plot,
+           width_svg = 8,
+           height_svg = 4.5,
+           options = list(
+             opts_selection(type = "single", only_shiny = FALSE)
+           ))
+    # girafe(ggobj = history_plot)
+  })
+
+  output$box_historyviz <- renderUI({
+
+    req(input$load_rankings)
+    req(nrow(history_rankings() > 0))
+
+
+    if(load_type() == "My History") {
+      player_names <- history_rankings() %>%
+        arrange(desc(Z)) %>%
+        distinct(`Player Name`, .keep_all = TRUE) %>%
+        slice(1:3) %>%
+        pull(`Player Name`)
+    }
+
+    if(load_type() == "Ranking ID") {
+      player_names <-history_rankings() %>%
+        arrange(Z) %>%
+        distinct(`Player Name`, .keep_all = TRUE) %>%
+        slice(1:5, nrow(.)-5:nrow(.)) %>%
+        pull(`Player Name`)
+    }
+
+    tagList(
+      pickerInput(
+        "historyplot_playernames",
+        label = "Select Players",
+        choices = unique(history_rankings()$`Player Name`),
+        selected = player_names,
+        multiple = TRUE,
+        options = list(
+          `max-options` = 10,
+          `live-search` = TRUE,
+          `actions-box` = TRUE,
+          `count-selected-text` = "count > 0"
+        ),
+      ),
+      br(),
+      girafeOutput("rankings_viz")
+    )
+
+  })
+
+  plot_myhistory <- function(history_rankings, player_names = NULL){
+
+    if(is.null(player_names)) {
+
+      return(NULL)
+
+      }
+
+    # Scatterplot
+    df_plot <-
+      history_rankings %>%
+      filter(`Player Name` %in% player_names) %>%
+      ggplot(
+        aes(x = Timestamp,
+            y = Z,
+            colour = `Player Name`,
+            group = `Player Name`,
+            data_id = `Player Name`,
+            tooltip = glue::glue("
+                                 {`Player Name`}
+                                 Date: {as_date(Timestamp)}
+                                 Type: {ecr_type} - {ecr_position}
+                                 Your Rank: {`Your Rank`}
+                                 FP Rank: {`FP Rank`}
+                                 Z: {Z}
+                                 ")
+        )) +
+      theme_minimal() +
+      geom_point_interactive() +
+      geom_line(stat = "smooth", alpha = 0.5, method = "glm", formula = 'y ~ x', se = FALSE) +
+      labs(
+        title = glue("Your Rankings vs FantasyPros"),
+        subtitle = "_measured in Z-score (standard deviations above/below FP average)_") +
+      xlab(NULL) +
+      ylab(NULL) +
+      theme(legend.position = "bottom",
+            plot.subtitle = element_markdown(),
+            plot.title.position = "plot")
+
+    # girafe(ggobj = df_plot,
+    #        width_svg = 8,
+    #        height_svg = 4.5,
+    #        options = list(
+    #          opts_selection(type = "single", only_shiny = FALSE)
+    #        ))
+
+    return(df_plot)
+  }
+
+  plot_sessionID <- function(history_rankings, player_names = NULL){
+    # BarPlot
+  }
+
 
 
 }
