@@ -15,18 +15,21 @@ suppressPackageStartupMessages({
   library(rlang)
   library(yaml)
 
+  # Data viz
+  library(RColorBrewer)
+  library(ggiraph)
+  library(ggtext)
+
   # Shiny
   library(shiny)
   library(bs4Dash)
   library(shinyWidgets)
   library(DT)
-  library(RColorBrewer)
   library(waiter)
   library(sever)
   library(auth0)
   library(uuid)
   library(metathis)
-  library(ggiraph)
 
   # Data output
   library(writexl)
@@ -93,7 +96,7 @@ sever_dp <- function(){
 
 box_inputs <- function(){
   box(
-    width = 8,
+    width = 12,
     inputId = 'box_inputs',
     status = "danger",
     title = "Select Ranking Set",
@@ -139,7 +142,7 @@ box_rankings <- function(ranking_type, position){
   box_title <- glue("Your Rankings: {ranking_type} {position}")
 
   box(
-    width = 8,
+    width = 12,
     inputId = 'box_rankings',
     status = "danger",
     title = box_title,
@@ -169,8 +172,6 @@ box_rankings <- function(ranking_type, position){
 
 }
 
-#### Update Position Filter ####
-
 update_position_filter <- function(session, rank_type){
 
   if (str_detect(rank_type, "Dynasty Overall")) {
@@ -186,34 +187,33 @@ update_position_filter <- function(session, rank_type){
   }
 }
 
-#### Rankings DT function ####
-rankings_datatable <- function(input_df){
+fn_box_historyviz <- function(history_rankings){
 
-  colourlist <- colorRampPalette(brewer.pal(3, "PRGn"))
-
-  input_df %>%
-    datatable(
-      extensions = "RowReorder",
-      selection = "none",
+  tagList(
+    pickerInput(
+      "historyplot_playernames",
+      label = "Select Players",
+      choices = unique(history_rankings$`Player Name`),
+      selected = player_names,
+      multiple = TRUE,
       options = list(
-        rowReorder = list(selector = "tr"),
-        order = list(c(5, "asc")),
-        dom = "ftir",
-        paging = FALSE,
-        searching = FALSE,
-        scrollX = TRUE
+        `max-options` = 10,
+        `live-search` = TRUE,
+        `actions-box` = TRUE,
+        `selected-text-format` = "count > 0"
       ),
-      callback = JS("table.on('row-reorder',function(e, details, all){
-                      Shiny.onInputChange('row_reorder', JSON.stringify(details));
-                      });")
-    ) %>%
-    formatRound(c("Z", "SD"), 1) %>%
-    formatStyle(columns = 0:11,
-                valueColumns = "Z",
-                backgroundColor = styleInterval(
-                  quantile(range(-3, 3),
-                           probs = seq(0.05, 0.95, 0.05),
-                           na.rm = TRUE),
-                  colourlist(20)))
+    ),
+    br(),
+    girafeOutput("rankings_viz",height = 400)
+  )
+}
 
+box_history_table <- function(){
+  box(
+    width = 12,
+    title = "Rankings Lookup",
+    status = "danger",
+    DTOutput("history_rankings"),
+    footer = div(style = "text-align:center;",downloadButton("download_loaded_rankings",class = "btn-success"))
+  )
 }

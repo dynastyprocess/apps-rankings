@@ -26,11 +26,10 @@
 > - Add age column [Done!]
 > - Import session ID (rename as rankings ID) as a template for making new rankings
 > IF my_history THEN show single or up to three players, plotting Z score over time, X = TIME, Y = Z [Done!]
-
-
-- Create a plot to show/highlight players with the highest absolute Z score (i.e. to highlight highest/lowest players compared to average)
-
-IF session_id THEN show bar plot with x = Z, y = player of top five and bottom five (and allow filtering for specific players)
-
-
+> - Load Rankings - have buttons fill box and session ID appear below [Done!] 
+> - Main panel's boxes have right hand whitespace [Done!]
+> - Top two inputs on main panel create changes downstream when they should not [Done!]
+> - Create a plot to show/highlight players with the highest absolute Z score (i.e. to highlight highest/lowest players compared to average) [Done!]
+> - IF session_id THEN show bar plot with x = Z, y = player of top five and bottom five (and allow filtering for specific players) [Done!]
+> - Sticky headers in table - scrollY? [Not Implemented]
 
