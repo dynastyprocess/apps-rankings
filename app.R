@@ -9,6 +9,7 @@ ui <- dashboardPage(
   sidebar = ui_sidebar(
     menuItem("Create Rankings", tabName = "rankings", icon = "hat-wizard"),
     menuItem("Search Rankings", tabName = "history", icon = "bolt"),
+    menuItem("FAQ", tabName = "FAQ", icon = "info"),
     external_menuItem("More by DynastyProcess", "https://dynastyprocess.com", icon = "quidditch"),
     uiOutput("user_info"),
     auth0::logoutButton(label = "Log Out",icon = icon("sign-out"))
@@ -62,10 +63,14 @@ ui <- dashboardPage(
               br(),
               conditionalPanel(
                 condition = "input.toggle_session_history == 'Ranking ID'",
-                textInput("session_id",
-                          label = NULL,
-                          width = '100%',
-                          placeholder = "Ranking ID")
+                style = "width:100%",
+                div(
+                  textInput("session_id",
+                            label = NULL,
+                            width = '100%',
+                            placeholder = "Ranking ID"),
+                  style = "text-align:center;"
+                )
               )
             ),
             footer = div(actionButton("load_rankings",
@@ -78,8 +83,11 @@ ui <- dashboardPage(
         ),
 
         uiOutput("box_history")
+      ),
+      tabItem(
+        tabName = "FAQ",
+        box_faq()
       )
-
     )
   )
 )

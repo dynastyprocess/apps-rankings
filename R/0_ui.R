@@ -34,6 +34,7 @@ suppressPackageStartupMessages({
   library(auth0)
   library(uuid)
   library(metathis)
+  library(details)
 
   # Data output
   library(writexl)
@@ -109,41 +110,73 @@ box_inputs <- function(){
     width = 12,
     inputId = 'box_inputs',
     status = "danger",
-    title = "Select Ranking Set",
+    title = "Start",
+
     fluidRow(
-      column(
-        width = 4,
-        pickerInput(
-          "rank_type",
-          "Select Ranking Type",
-          width = '100%',
-          multiple = FALSE,
-          choices = c(
-            "Dynasty Overall 1QB",
-            "Dynasty Overall SF",
-            "Dynasty Positional",
-            "Redraft Overall 1QB",
-            "Redraft Overall SF",
-            "Redraft Positional"
-          ))
-      ),
-      column(
-        width = 4,
-        pickerInput(
-          'position',
-          label = "Select Position",
-          choices = c("All Offense","QB","RB","WR","TE","Rookies","All Defense", "DL", "LB", "DB"),
-          multiple = FALSE,
-          width = '100%')
+      markdown(
+        "The **DynastyProcess Rankings** app helps you build your own set of fantasy football rankings, using FantasyPros current rankings as a starting point!"
+      )),
+    fluidRow(
+      details(summary = "How to Use",
+              output = "html",
+              markdown(
+                "As you drag and drop players, the player will recolour to indicate how far away from the expert consensus you are.
+
+`Green` indicates that you are higher on that player, while `purple` indicates that you are lower on that player.
+
+You can save, download, or import past rankings by referring to a specific rankings ID, as well as look at your past rankings on the History tab.
+
+In future iterations, you will be able to use the rankings you make as the basis for a trade calculator!"
+              )
       )
     ),
-    footer =
-      span(
-        actionButton('load','Load Ranking Set!',icon = icon('rocket'))
-      )
+hr(),
+fluidRow(
+  column(
+    width = 4,
+    pickerInput(
+      "rank_type",
+      "Select Ranking Type",
+      width = '100%',
+      multiple = FALSE,
+      choices = c(
+        "Dynasty Overall 1QB",
+        "Dynasty Overall SF",
+        "Dynasty Positional",
+        "Redraft Overall 1QB",
+        "Redraft Overall SF",
+        "Redraft Positional"
+      ))
+  ),
+  column(
+    width = 4,
+    pickerInput(
+      'position',
+      label = "Select Position",
+      choices = c("All Offense","QB","RB","WR","TE","Rookies","All Defense", "DL", "LB", "DB"),
+      multiple = FALSE,
+      width = '100%')
+  )
+),
+footer =
+  span(
+    actionButton('load','Load Ranking Set!',icon = icon('rocket'))
+  )
   )
 }
 
+#### FAQ ####
+
+box_faq <- function(){
+
+  box(
+    width = 12,
+    status = "danger",
+    title = "Frequently Asked Questions",
+    includeMarkdown("faq.md")
+  )
+
+}
 
 #### Table Box ####
 
