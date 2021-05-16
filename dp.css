@@ -2,6 +2,10 @@
 
 body {font-family: 'Fira Sans Condensed', sans-serif;}
 
-#box_inputs {
+#box_inputs .card-footer {
   text-align: center;
+}
+
+#toggle_session_history .btn-group {
+  width: 100%;
 }
