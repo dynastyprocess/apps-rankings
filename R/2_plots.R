@@ -43,6 +43,7 @@ plot_rankingsviz <- function(load_type, history_rankings, player_names){
     xlab(NULL) +
     ylab(NULL) +
     theme(legend.position = "bottom",
+          text = element_text(family = "IBM Plex Sans Condensed"),
           plot.subtitle = element_markdown(),
           plot.title.position = "plot")
 
@@ -93,6 +94,7 @@ plot_rankingsviz <- function(load_type, history_rankings, player_names){
         " - {history_rankings$ecr_position[[1]]}",
         " - {lubridate::as_date(history_rankings$Timestamp[[1]])}_")) +
     theme(legend.position = "none",
+          text = element_text(family = "IBM Plex Sans Condensed"),
           plot.title = element_markdown(),
           plot.subtitle = element_markdown(),
           plot.caption = element_markdown(),

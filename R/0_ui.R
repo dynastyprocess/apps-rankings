@@ -19,6 +19,10 @@ suppressPackageStartupMessages({
   library(RColorBrewer)
   library(ggiraph)
   library(ggtext)
+  library(showtext)
+  library(sysfonts)
+  # library(ragg)
+  # library(systemfonts)
 
   # Shiny
   library(shiny)
@@ -33,6 +37,12 @@ suppressPackageStartupMessages({
 
   # Data output
   library(writexl)
+
+  # options(shiny.useragg = TRUE)
+
+  showtext_auto()
+
+  font_add_google("IBM Plex Sans Condensed")
 
 })
 

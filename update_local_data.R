@@ -13,6 +13,7 @@ update_local_data <- function(){
       scrape_date == max(scrape_date),
       ecr_type %in% c("dp",  "do",  "dsf", "drk", "rp",  "ro",  "rsf")
     ) %>%
+    rename(fantasypros_id = id) %>%
     left_join(
       dp_playerids() %>% select(fantasypros_id,age),
       by = c("fantasypros_id")

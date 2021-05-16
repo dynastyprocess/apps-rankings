@@ -340,8 +340,8 @@ server <- function(input, output, session) {
     req(input$historyplot_playernames)
 
     girafe(ggobj = plot_rankingsviz(load_type(), history_rankings(), input$historyplot_playernames),
-           width_svg = 8,
-           height_svg = 4.5,
+           width_svg = 6,
+           height_svg = 3.375,
            options = list(
              opts_selection(type = "single", only_shiny = FALSE)
            ))
