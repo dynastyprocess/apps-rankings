@@ -32,4 +32,8 @@
 > - Create a plot to show/highlight players with the highest absolute Z score (i.e. to highlight highest/lowest players compared to average) [Done!]
 > - IF session_id THEN show bar plot with x = Z, y = player of top five and bottom five (and allow filtering for specific players) [Done!]
 > - Sticky headers in table - scrollY? [Not Implemented]
+> - Data automatic updater - check why cron did not run
 
+- About box or tab for section [inputs, drag/drop overlay]?
+  - Z score
+- Ranking ID - stretch full horizontal

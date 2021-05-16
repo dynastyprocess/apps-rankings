@@ -87,7 +87,8 @@ plot_rankingsviz <- function(load_type, history_rankings, player_names){
     scale_fill_brewer(palette = "Set3",direction = -1,aesthetics = c("colour","fill")) +
     labs(
       title = glue("**Rankings Highlights**"),
-      subtitle = glue("_**Highest** and **Lowest** measured by Z-score (standard deviations above/below FP average)_"),
+      subtitle = glue("_**Highest** and **Lowest** measured by Z-score <br>
+                      (standard deviations above/below FP average)_"),
       caption = glue(
         "_{history_rankings$user_nickname[[1]]}",
         " - {history_rankings$ecr_type[[1]]}",
