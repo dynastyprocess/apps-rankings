@@ -122,7 +122,7 @@ box_inputs <- function(){
               markdown(
                 "As you drag and drop players, the player will recolour to indicate how far away from the expert consensus you are.
 
-`Green` indicates that you are higher on that player, while `purple` indicates that you are lower on that player.
+***Green*** indicates that you are higher on that player, while ***purple*** indicates that you are lower on that player.
 
 You can save, download, or import past rankings by referring to a specific rankings ID, as well as look at your past rankings on the History tab.
 
