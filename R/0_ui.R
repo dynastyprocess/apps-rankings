@@ -62,7 +62,7 @@ ui_header <- function(title, ...) {
 
 ui_sidebar <- function(...) {
   bs4Dash::dashboardSidebar(
-    title = "Apps",
+    title = "DP Apps",
     fixed = TRUE,
     skin = "dark",
     elevation = 3,
@@ -70,7 +70,7 @@ ui_sidebar <- function(...) {
     opacity = 0.8,
     url = "https://dynastyprocess.com",
     expand_on_hover = TRUE,
-    src = "https://avatars2.githubusercontent.com/u/63691873?s=400&u=d9289a2540799f19ca6d8ad866e219ee2d602ba9&v=4",
+    src = "https://raw.githubusercontent.com/dynastyprocess/graphics/main/.dynastyprocess/logohexonly.png",
     bs4Dash::sidebarMenu(...)
   )
 }
@@ -113,9 +113,42 @@ box_inputs <- function(){
     title = "Start",
 
     fluidRow(
+      column(4,
+             img(src = "https://raw.githubusercontent.com/dynastyprocess/graphics/main/apps/rankings-header.png",
+                 style = "max-height:20vh; max-width:100%"),
+      ),
+      column(
+        width = 4,
+        pickerInput(
+          "rank_type",
+          "Select Ranking Type",
+          width = '100%',
+          multiple = FALSE,
+          choices = c(
+            "Dynasty Overall 1QB",
+            "Dynasty Overall SF",
+            "Dynasty Positional",
+            "Redraft Overall 1QB",
+            "Redraft Overall SF",
+            "Redraft Positional"
+          ))
+      ),
+      column(
+        width = 4,
+        pickerInput(
+          'position',
+          label = "Select Position",
+          choices = c("All Offense","QB","RB","WR","TE","Rookies","All Defense", "DL", "LB", "DB"),
+          multiple = FALSE,
+          width = '100%')
+      )
+    ),
+    hr(),
+    fluidRow(
       markdown(
-        "The **DynastyProcess Rankings** app helps you build your own set of fantasy football rankings, using FantasyPros current rankings as a starting point!"
+        "This app helps you build your own set of fantasy football rankings, using FantasyPros current rankings as a starting point!"
       )),
+    br(),
     fluidRow(
       details(summary = "How to Use",
               output = "html",
@@ -129,39 +162,12 @@ You can save, download, or import past rankings by referring to a specific ranki
 In future iterations, you will be able to use the rankings you make as the basis for a trade calculator!"
               )
       )
+
     ),
-hr(),
-fluidRow(
-  column(
-    width = 4,
-    pickerInput(
-      "rank_type",
-      "Select Ranking Type",
-      width = '100%',
-      multiple = FALSE,
-      choices = c(
-        "Dynasty Overall 1QB",
-        "Dynasty Overall SF",
-        "Dynasty Positional",
-        "Redraft Overall 1QB",
-        "Redraft Overall SF",
-        "Redraft Positional"
-      ))
-  ),
-  column(
-    width = 4,
-    pickerInput(
-      'position',
-      label = "Select Position",
-      choices = c("All Offense","QB","RB","WR","TE","Rookies","All Defense", "DL", "LB", "DB"),
-      multiple = FALSE,
-      width = '100%')
-  )
-),
-footer =
-  span(
-    actionButton('load','Load Ranking Set!',icon = icon('rocket'))
-  )
+    footer =
+      span(
+        actionButton('load','Load Ranking Set!',icon = icon('rocket'))
+      )
   )
 }
 

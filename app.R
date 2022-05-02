@@ -20,7 +20,7 @@ ui <- dashboardPage(
         title = "Rankings - DynastyProcess.com",
         description = "An interface for creating fantasy football rankings",
         url = "https://apps.dynastyprocess.com",
-        image = "https://raw.githubusercontent.com/dynastyprocess/graphics/main/.dynastyprocess/logo-hex-small.png",
+        image = "https://raw.githubusercontent.com/dynastyprocess/graphics/main/apps/rankings-logo.png",
         image_alt = "An interface for creating fantasy football rankings",
         twitter_creator = "@_TanHo",
         twitter_card_type = "summary",
